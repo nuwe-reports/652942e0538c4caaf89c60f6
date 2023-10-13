@@ -1,0 +1,20 @@
+# Fase de construcción
+FROM maven:3.8.1-openjdk-11-slim AS build
+
+# Copiar pom.xml y descargar dependencias para aprovechar la capa de caché de Docker
+COPY pom.xml .
+RUN mvn clean install -DskipTests
+
+# Copiar el código fuente y compilar el proyecto
+COPY src ./src
+RUN mvn package -DskipTests
+
+# Fase de ejecución
+FROM openjdk:11-jre-slim
+WORKDIR /app
+
+# Copiar el jar del microservicio desde la fase de construcción (¡ajustado!)
+COPY --from=build /target/your-microservice.jar .
+
+# Ejecutar el microservicio
+CMD ["java", "-jar", "your-microservice.jar"]

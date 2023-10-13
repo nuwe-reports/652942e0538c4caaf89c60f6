@@ -52,12 +52,45 @@ public class AppointmentController {
 
     @PostMapping("/appointment")
     public ResponseEntity<List<Appointment>> createAppointment(@RequestBody Appointment appointment){
+    	
         /** TODO 
          * Implement this function, which acts as the POST /api/appointment endpoint.
          * Make sure to check out the whole project. Specially the Appointment.java class
          */
+    	
+    	// Verificacion de si el horario de inicio es anterior al horario de finalización
+    	
+    	if(appointment.getStartsAt().isAfter(appointment.getFinishesAt())) {
+    		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    	}
+    	
+    	//Verificacion de sihay conflicto de citas
+    	List<Appointment> appointments = new ArrayList<>();
+    	appointmentRepository.findAll().forEach(appointments::add);
+    	
+    	for (Appointment appointment2 : appointments) {
+    		
+    		//Comprobar si est libre:
+    		if (appointment2.getRoom() == appointment.getRoom() &&
+    			    appointment.getFinishesAt().isBefore(appointment2.getStartsAt()) &&
+    			    appointment.getStartsAt().isAfter(appointment2.getStartsAt())) {
+    			    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    			}
+    		
+    		
+    		//comprobacion si hay una cita en esa sala a esa hora
+    		if(appointment2.getRoom() == appointment.getRoom() && appointment2.getStartsAt() == appointment.getStartsAt()) {
+    			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    			
+    		}
+			
+		}
+    	//guardar la cita
+    	appointmentRepository.save(appointment);
+    	
         return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT);
     }
+
 
 
     @DeleteMapping("/appointments/{id}")
